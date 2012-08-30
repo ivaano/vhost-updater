@@ -136,6 +136,16 @@ EOF
     print FILE $vhostContent;
     close FILE;
     
+    my $initialTemplate = << "PHP";
+<?php
+    phpinfo();
+PHP
+    informOut("Creating index.php file...");
+    open FILE, ">", $vhostInfo{'docRoot'}.'/index.php' or die $!;
+    print FILE $initialTemplate;
+    close FILE;
+	chown $uid, $gid, $vhostInfo{'docRoot'}.'/index.php';
+
     informOut("Adding host $vhost");
     determineIp();
     open FILE, ">>", '/etc/hosts' or die $!;
@@ -151,7 +161,7 @@ EOF
 
 sub restartApache
 {
-    informOut("Restarting apache");
+    informOut("Restarting apache...");
     my $output = `/etc/init.d/apache2 restart`;
     print $output; 
     my $dnsmasq = `ps -eaf |grep dnsmasq |grep -v grep`;
