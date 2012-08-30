@@ -171,7 +171,7 @@ sub deleteVhost
     my @hostsFile = <IN>;
     close IN;
     
-    my @contents = grep(!/^127.0.0.1\t$vhost/, @hostsFile);
+    my @contents = grep(!/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\t$vhost/, @hostsFile);
     
     open FILE, ">", '/etc/hosts' or die $!;
     print FILE @contents;
