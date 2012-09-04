@@ -31,6 +31,7 @@ my $del = '';
 my $rm  = '';
 my $add = '';
 my $domain = '';
+my $php = '';
 
 if (getpwuid( $< ) ne 'root') {
 	print "Script needs root privileges \n";
@@ -41,6 +42,7 @@ unless (GetOptions (
 		'del' => \$del, 
 		'add' => \$add, 
 		'domain=s' => \$domain,
+        'php=s' => \$php,
         'rm' => \$rm) or usage()) {
     usage();
 }
@@ -49,7 +51,14 @@ unless (GetOptions (
 if ($add || $del) {
     if ($domain) {
         if ($add) {
-            createVhost($domain);
+            $php = ($php eq '') ? '5.4' : $php;
+            if ($php eq '5.2' || $php eq '5.3' || $php eq '5.4') {
+                print "Configuring a new virtual host with php $php \n";
+                createVhost($domain, $php);
+            } else {
+                print "unknown php version, please choose between 5.2, 5.3 or 5.4 \n";
+                exit;
+            }
         } elsif ($del) {
             deleteVhost($domain, $rm);
         }
@@ -62,11 +71,13 @@ if ($add || $del) {
 
 
 sub usage {
-    print <<USAGE
+    print <<USAGE;
 This program will add or remove apache virtual hosts.
 
-usage: vhost-updater.pl [--add | --del] --domain newhost.tld 
+usage: vhost-updater.pl [--add | --del [ --rm ]] [--php (5.2 | 5.3 | 5.4)] --domain newhost.tld 
 USAGE
+
+    exit;
 }
 
 sub determineIp 
@@ -102,6 +113,7 @@ sub returnVhostPaths
 
 sub createVhost {
     my $vhost = shift;
+    my $php   = shift;
     #first create the docRoot
     my %vhostInfo = returnVhostPaths($vhost);
     
@@ -116,12 +128,36 @@ sub createVhost {
     
 
     informOut("Site File: $vhostInfo{'apacheConfig'}");
+    my $phpVersion = '';
+    my $engineOff  = '';
+
+    if ($php eq '5.2') {
+        $engineOff = 'php_value engine off';
+        $phpVersion = << "PHP";
+        AddHandler php-cgi .php
+        AddType application/x-httpd-php .php
+        Action application/x-httpd-php "/php/php-cgi-5.2.17"
+PHP
+
+    }
+    
+    if ($php eq '5.3') {
+        $engineOff = 'php_value engine off';
+        $phpVersion = << "PHP";
+        AddHandler php-cgi .php
+        AddType application/x-httpd-php .php
+        Action application/x-httpd-php "/php/php-cgi-5.3.16"
+PHP
+
+    }
     
     my $vhostContent = << "EOF";
 <VirtualHost *:80>
     ServerName $vhost
     DocumentRoot $vhostInfo{'docRoot'}
+    $engineOff
     <Directory $vhostInfo{'docRoot'}>
+        $phpVersion
         Options Indexes FollowSymLinks
         AllowOverride All
         Order allow,deny
