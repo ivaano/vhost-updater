@@ -12,3 +12,9 @@ chmod +x /usr/local/bin/vhost-updater.pl
 run the script with sudo
 
 sudo vhost-updater.pl --add --domain testing.chango
+
+#Syntax
+* --add  - Create a new virtual host with all the file structure
+* --del  - Remove a virtual host from apache
+  * -- rm - Used with --del switch, also removes the directory for that virtual host
+* -- domain - specify the name of the virtual host

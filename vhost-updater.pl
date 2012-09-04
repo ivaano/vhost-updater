@@ -28,6 +28,7 @@ our $ipAddress;
 
 
 my $del = '';
+my $rm  = '';
 my $add = '';
 my $domain = '';
 
@@ -39,7 +40,8 @@ if (getpwuid( $< ) ne 'root') {
 unless (GetOptions (
 		'del' => \$del, 
 		'add' => \$add, 
-		'domain=s' => \$domain) or usage()) {
+		'domain=s' => \$domain,
+        'rm' => \$rm) or usage()) {
     usage();
 }
 
@@ -49,7 +51,7 @@ if ($add || $del) {
         if ($add) {
             createVhost($domain);
         } elsif ($del) {
-            deleteVhost($domain);
+            deleteVhost($domain, $rm);
         }
     } else {
         usage();
@@ -174,7 +176,9 @@ sub restartApache
 sub deleteVhost
 {
     my $vhost = shift;
-     my %vhostInfo = returnVhostPaths($vhost);
+    my $rm = shift;
+
+    my %vhostInfo = returnVhostPaths($vhost);
      
     informOut("Removing $vhost from hosts file");
     open IN, '<', '/etc/hosts' or die $!;
@@ -193,9 +197,15 @@ sub deleteVhost
     informOut("Removing  $vhostInfo{'apacheConfig'} file");
     unlink($vhostInfo{'apacheConfig'});
     
+    if ($rm == 1) {
+        rmtree($vhostInfo{'hostDir'}, { 
+                verbose => 1});
+    } else {
+        print " manually remove $vhostInfo{'docRoot'}... \n";
+    }
     restartApache();
         
-    print " manually remove $vhostInfo{'docRoot'}... \n";
+
     
 }
 
