@@ -5,15 +5,14 @@ Perl script to add/delete virtual hosts to a debian/ubuntu system.
 
 #Instructions
 * Edit the predefined settings.
-    our $interface        = 'eth0';
-    our $ifconfig         = '/sbin/ifconfig';
-    our $apacheConfigDir  = '/etc/apache2';
-    our $sitesAvailable   = 'sites-available';
-
-    our $docRootPrefix    = '/var/www/vhosts';
-    our $docRoot          = 'public_html';
-    our $logsDir          = 'logs';
-    our $user 			  = 'ivan';
+        our $interface        = 'eth0';
+        our $ifconfig         = '/sbin/ifconfig';
+        our $apacheConfigDir  = '/etc/apache2';
+        our $sitesAvailable   = 'sites-available';
+        our $docRootPrefix    = '/var/www/vhosts';
+        our $docRoot          = 'public_html';
+        our $logsDir          = 'logs';
+        our $user 			  = 'ivan';
 * Place the script on /usr/local/bin and give it permissions to execute.
 
 chmod +x /usr/local/bin/vhost-updater.pl
