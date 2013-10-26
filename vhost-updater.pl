@@ -12,7 +12,7 @@
 use strict;
 use File::Path qw(mkpath rmtree);
 use Getopt::Long;
-
+use POSIX;
 
 our $interface        = 'eth0';
 our $ifconfig         = '/sbin/ifconfig';
@@ -66,7 +66,8 @@ if ($add || $del) {
         usage();
     }
 } else {
-    usage();
+    updateSummaryTable();
+    #usage();
 }
 
 
@@ -195,6 +196,58 @@ PHP
    
     restartApache();
     #print $vhostConten t;
+}
+
+sub updateSummaryTable
+{
+    my @vhosts;
+    my @dir = split(/\//, $apacheConfigDir);
+    push(@dir, $sitesAvailable);
+    my $dir = join('/', @dir);
+    #reed all files in sites-enabled
+    opendir (DIR, $dir) or die $!;
+    while (my $file = readdir(DIR)) {
+        #omit . and .. files
+        next if ($file =~ m/^\./);
+        my %vhostData= ();
+        $file = "$dir/$file";
+        #read file content
+        my $vhostFile = do {
+           local $/ = undef;
+            open my $fh, "<", $file
+            or die "could not open $file: $!";
+            <$fh>;
+        }; 
+        #include only VirtualHost with Name
+        $vhostFile =~ /(?<=ServerName\s)(?:.*)/; 
+        if (length( $& // '')) {
+            $vhostData{'Date'} = POSIX::strftime("%m/%d/%y",localtime((stat $file)[10]));
+            $vhostData{'ServerName'}=$&; 
+            $vhostFile =~ /(?<=DocumentRoot\s)(?:.*)/; 
+            $vhostData{'DocumentRoot'}=$&; 
+            if ($vhostFile =~ /(?<=\#Description:\s)(?:.*)/) {
+                $vhostData{'Description'}=$&; 
+            } else {
+                $vhostData{'Description'}=''; 
+            }
+            $vhostData{'SiteFile'} = $file;
+            push(@vhosts, \%vhostData);
+        }
+    }
+    closedir(DIR);
+    #sort by ServerName
+    @vhosts = sort{$a->{'ServerName'} cmp $b->{'ServerName'}} @vhosts;
+
+    #table generation
+    foreach (@vhosts) {
+        my %hashi = %{$_};
+        print $hashi{'ServerName'} . "\n";
+        print $hashi{'DocumentRoot'} . "\n";
+        print "Description: " . $hashi{'Description'} . "\n";
+        print $hashi{'SiteFile'} . "\n";
+        print $hashi{'Date'} . "\n";
+        print "=========================\n";
+    }
 }
 
 sub restartApache
