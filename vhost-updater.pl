@@ -34,6 +34,7 @@ our $sumaryFile       = '/var/www/default/sumary.html';
 my $del = '';
 my $rm  = '';
 my $add = '';
+my $sumaryTbl= '';
 my $domain = '';
 my $description = '';
 my $php = '';
@@ -46,6 +47,7 @@ if (getpwuid( $< ) ne 'root') {
 unless (GetOptions (
 		'del' => \$del, 
 		'add' => \$add, 
+        'summary' => \$sumaryTbl,
 		'domain=s' => \$domain,
 		'desc=s' => \$description,
         'php=s' => \$php,
@@ -71,7 +73,9 @@ if ($add || $del) {
     } else {
         usage();
     }
-} else {
+} elsif ($sumaryTbl){
+    createSummaryTable(); 
+}else {
     usage();
 }
 
@@ -80,7 +84,7 @@ sub usage {
     print <<USAGE;
 This program will add or remove apache virtual hosts.
 
-usage: vhost-updater.pl [--add | --del [ --rm ]] [--php (5.2 | 5.3 | 5.4)] --domain newhost.tld --desc "My new site"
+usage: vhost-updater.pl [--add | --del [ --rm ] | --summary] [--php (5.2 | 5.3 | 5.4)] --domain newhost.tld --desc "My new site"
 USAGE
 
     exit;
@@ -355,7 +359,7 @@ HTML
 </html>
 HTML
     
-    informOut("Creating Sumary Table.");
+    informOut("Creating Sumary Table in $sumaryFile");
     open FILE, ">", $sumaryFile or die $!;
     print FILE $html;
     close FILE;
