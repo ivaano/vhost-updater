@@ -28,6 +28,7 @@ our $user 			  = 'ivan';
 our $ipAddress;
 #leave empty if you dont want the sites sumary file
 our $sumaryFile       = '/var/www/default/sumary.html';
+our $defaultPhpVersion = '5.4.4';
 
 
 
@@ -160,17 +161,15 @@ sub createVhost {
         AddType application/x-httpd-php .php
         Action application/x-httpd-php "/php/php-cgi-5.2.17"
 PHP
-
     }
     
     if ($php eq '5.3') {
         $engineOff = 'php_value engine off';
         $phpVersion = << "PHP";
-        AddHandler php-cgi .php
+AddHandler php-cgi .php
         AddType application/x-httpd-php .php
         Action application/x-httpd-php "/php/php-cgi-5.3.16"
 PHP
-
     }
     
     my $vhostContent = << "EOF";
@@ -257,6 +256,11 @@ sub createSummaryTable
                 $vhostData{'Description'}=''; 
             }
             $vhostData{'SiteFile'} = $file;
+            if ($vhostFile =~ /(?<=\/php\/php-cgi-)(?:[^"]*)/) {
+                $vhostData{'PHPVersion'} = $&
+            } else {
+                $vhostData{'PHPVersion'} = $defaultPhpVersion ;
+            }
             push(@vhosts, \%vhostData);
         }
     }
@@ -326,9 +330,10 @@ h1 {
 <table id="box-table-a" summary="Employee Pay Sheet">
     <thead>
       <tr>
-          <th scope="col">Name</th>
+            <th scope="col">Name</th>
             <th scope="col">Description</th>
             <th scope="col">Location</th>
+            <th scope="col">PHP Ver</th>
             <th scope="col">Date</th>
         </tr>
     </thead>
@@ -348,6 +353,7 @@ HTML
             <td><a href=\"http://$hashi{'ServerName'}\">$hashi{'ServerName'}</a></td>
             <td>$hashi{'Description'}</td>
             <td>$hashi{'DocumentRoot'}</td>
+            <td>$hashi{'PHPVersion'}</td>
             <td>$hashi{'Date'}</td>
         </tr>
 ";
