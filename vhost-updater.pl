@@ -14,6 +14,7 @@ use File::Path qw(mkpath rmtree);
 use Getopt::Long;
 use POSIX;
 use Sys::Hostname;
+use Scalar::Util qw(looks_like_number);
 
 our $interface        = 'eth0';
 our $ifconfig         = '/sbin/ifconfig';
@@ -25,6 +26,8 @@ our $docRoot          = 'public_html';
 our $logsDir          = 'logs';
 our $user 			  = 'ivan';
 our $ipAddress;
+#leave empty if you dont want the sites sumary file
+our $sumaryFile       = '/var/www/default/sumary.html';
 
 
 
@@ -32,6 +35,7 @@ my $del = '';
 my $rm  = '';
 my $add = '';
 my $domain = '';
+my $description = '';
 my $php = '';
 
 if (getpwuid( $< ) ne 'root') {
@@ -43,6 +47,7 @@ unless (GetOptions (
 		'del' => \$del, 
 		'add' => \$add, 
 		'domain=s' => \$domain,
+		'desc=s' => \$description,
         'php=s' => \$php,
         'rm' => \$rm) or usage()) {
     usage();
@@ -55,7 +60,7 @@ if ($add || $del) {
             $php = ($php eq '') ? '5.4' : $php;
             if ($php eq '5.2' || $php eq '5.3' || $php eq '5.4') {
                 print "Configuring a new virtual host with php $php \n";
-                createVhost($domain, $php);
+                createVhost($domain, $php, $description);
             } else {
                 print "unknown php version, please choose between 5.2, 5.3 or 5.4 \n";
                 exit;
@@ -67,8 +72,7 @@ if ($add || $del) {
         usage();
     }
 } else {
-    createSummaryTable();
-    #usage();
+    usage();
 }
 
 
@@ -76,7 +80,7 @@ sub usage {
     print <<USAGE;
 This program will add or remove apache virtual hosts.
 
-usage: vhost-updater.pl [--add | --del [ --rm ]] [--php (5.2 | 5.3 | 5.4)] --domain newhost.tld 
+usage: vhost-updater.pl [--add | --del [ --rm ]] [--php (5.2 | 5.3 | 5.4)] --domain newhost.tld --desc "My new site"
 USAGE
 
     exit;
@@ -116,6 +120,18 @@ sub returnVhostPaths
 sub createVhost {
     my $vhost = shift;
     my $php   = shift;
+    my $desc  = shift;
+    if ($desc eq '') {
+        #the description was not passed as an arg
+        #lets ask for one
+        print "Enter a small description for this project: ";
+        $desc = <>;
+    }
+    $desc =~ s/^\s+//;
+    $desc =~ s/\s+$//;
+    if ($desc ne '') {
+        $desc = '#Description: '.$desc;
+    }
     #first create the docRoot
     my %vhostInfo = returnVhostPaths($vhost);
     
@@ -154,6 +170,7 @@ PHP
     }
     
     my $vhostContent = << "EOF";
+$desc
 <VirtualHost *:80>
     ServerName $vhost
     DocumentRoot $vhostInfo{'docRoot'}
@@ -196,11 +213,15 @@ PHP
     print $output;
    
     restartApache();
-    #print $vhostConten t;
+    createSummaryTable();
+    informOut("new vhost ready at http://$vhost");
 }
 
 sub createSummaryTable 
 {
+    if ($sumaryFile eq '') {
+        return;
+    }
     my @vhosts;
     my @dir = split(/\//, $apacheConfigDir);
     push(@dir, $sitesAvailable);
@@ -212,14 +233,14 @@ sub createSummaryTable
         next if ($file =~ m/^\./);
         my %vhostData= ();
         $file = "$dir/$file";
-        #read file content
+        #read each file content
         my $vhostFile = do {
            local $/ = undef;
             open my $fh, "<", $file
             or die "could not open $file: $!";
             <$fh>;
         }; 
-        #include only VirtualHost with Name
+        #include only VirtualHosta with ServerName
         $vhostFile =~ /(?<=ServerName\s)(?:.*)/; 
         if (length( $& // '')) {
             $vhostData{'Date'} = POSIX::strftime("%m/%d/%y",localtime((stat $file)[10]));
@@ -333,8 +354,11 @@ HTML
 </body>
 </html>
 HTML
-print $html;
-
+    
+    informOut("Creating Sumary Table.");
+    open FILE, ">", $sumaryFile or die $!;
+    print FILE $html;
+    close FILE;
 }
 
 sub restartApache
@@ -353,6 +377,10 @@ sub deleteVhost
 {
     my $vhost = shift;
     my $rm = shift;
+    #fix warning for empty args
+    if (!looks_like_number($rm)) {
+        $rm = 0;
+    }
 
     my %vhostInfo = returnVhostPaths($vhost);
      
@@ -380,9 +408,7 @@ sub deleteVhost
         print " manually remove $vhostInfo{'docRoot'}... \n";
     }
     restartApache();
-        
-
-    
+    createSummaryTable();
 }
 
 sub informOut {
