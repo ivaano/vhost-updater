@@ -20,4 +20,4 @@ sudo vhost-updater.pl --add --domain testing.chango
   * -- rm   - Used with --del switch, also removes the directory for that virtual host.
 * --domain  - Used with (add | del) to specify the name of the new virtual host to be added or removed.
 * --php     - (Optional) used with add to specfy php version 5.2, 5.3 or 5.4
-* --desc    - (Optional) used with add argument to  add a description as comment to the virtual host, this description also be shown in the summary table.
+* --desc    - (Optional) used with add argument to  add a description as comment to the virtual host.
