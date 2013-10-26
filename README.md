@@ -15,6 +15,8 @@ Perl script to add/delete virtual hosts to a debian/ubuntu system.
         our $logsDir          = 'logs';
         our $user 			  = 'ivan';
         
+On Debian/Ubuntu just change the $user to assign the propper permissions.
+
 * Place the script on /usr/local/bin and give it permissions to execute.
 
 chmod +x /usr/local/bin/vhost-updater.pl
