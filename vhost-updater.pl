@@ -13,6 +13,7 @@ use strict;
 use File::Path qw(mkpath rmtree);
 use Getopt::Long;
 use POSIX;
+use Sys::Hostname;
 
 our $interface        = 'eth0';
 our $ifconfig         = '/sbin/ifconfig';
@@ -66,7 +67,7 @@ if ($add || $del) {
         usage();
     }
 } else {
-    updateSummaryTable();
+    createSummaryTable();
     #usage();
 }
 
@@ -198,7 +199,7 @@ PHP
     #print $vhostConten t;
 }
 
-sub updateSummaryTable
+sub createSummaryTable 
 {
     my @vhosts;
     my @dir = split(/\//, $apacheConfigDir);
@@ -237,17 +238,103 @@ sub updateSummaryTable
     closedir(DIR);
     #sort by ServerName
     @vhosts = sort{$a->{'ServerName'} cmp $b->{'ServerName'}} @vhosts;
+    my $hostname = hostname;
+    my $html = <<"HTML";
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Virtual Hosts</title>
+<style type="text/css">
 
+body
+{
+  line-height: 1.6em;
+}
+
+h1 {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+  font-weight: bold;
+  color: #000;
+  font-size: 32px;
+}
+
+#box-table-a
+{
+  font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+  font-size: 14px;
+  margin-left:auto; 
+  margin-right:auto;
+  width: 900px;
+  text-align: left;
+  border-collapse: collapse;
+}
+#box-table-a th
+{
+  font-size: 13px;
+  font-weight: normal;
+  padding: 8px;
+  background: #b9c9fe;
+  border-top: 4px solid #aabcfe;
+  border-bottom: 1px solid #fff;
+  color: #039;
+}
+#box-table-a td
+{
+  padding: 8px;
+  background: #e8edff; 
+  border-bottom: 1px solid #fff;
+  color: #669;
+  border-top: 1px solid transparent;
+}
+#box-table-a tr:hover td
+{
+  background: #d0dafd;
+  color: #339;
+}
+</style>
+</head>
+<body>
+
+<h1>$hostname Virtual Hosts</h1>
+
+<table id="box-table-a" summary="Employee Pay Sheet">
+    <thead>
+      <tr>
+          <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Location</th>
+            <th scope="col">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+HTML
+ 
     #table generation
     foreach (@vhosts) {
         my %hashi = %{$_};
-        print $hashi{'ServerName'} . "\n";
-        print $hashi{'DocumentRoot'} . "\n";
-        print "Description: " . $hashi{'Description'} . "\n";
-        print $hashi{'SiteFile'} . "\n";
-        print $hashi{'Date'} . "\n";
-        print "=========================\n";
-    }
+        #print $hashi{'ServerName'} . "\n";
+        #print $hashi{'DocumentRoot'} . "\n";
+        #print "Description: " . $hashi{'Description'} . "\n";
+        #print $hashi{'SiteFile'} . "\n";
+        #print $hashi{'Date'} . "\n";
+        #print "=========================\n";
+        $html .="        <tr>
+            <td><a href=\"http://$hashi{'ServerName'}\">$hashi{'ServerName'}</a></td>
+            <td>$hashi{'Description'}</td>
+            <td>$hashi{'DocumentRoot'}</td>
+            <td>$hashi{'Date'}</td>
+        </tr>
+";
+        }
+    $html .= <<"HTML";
+    </tbody>
+</table>
+</body>
+</html>
+HTML
+print $html;
+
 }
 
 sub restartApache
