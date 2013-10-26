@@ -14,8 +14,10 @@ run the script with sudo
 sudo vhost-updater.pl --add --domain testing.chango
 
 #Syntax
+* --summary - Create an html table with all the virtual hosts in sites-enabled folder
 * --add     - Create a new virtual host with all the file structure
 * --del     - Remove a virtual host from apache
-  * -- rm   - Used with --del switch, also removes the directory for that virtual host
-* -- domain - specify the name of the virtual host
-* -- php    - (Optional) Specfy php version 5.2, 5.3 or 5.4
+  * -- rm   - Used with --del switch, also removes the directory for that virtual host.
+* --domain  - Used with (add | del) to specify the name of the new virtual host to be added or removed.
+* --php     - (Optional) used with add to specfy php version 5.2, 5.3 or 5.4
+* --desc    - (Optional) used with add argument to  add a description as comment to the virtual host, this description also be shown in the summary table.
