@@ -159,7 +159,7 @@ sub createVhost {
         $phpVersion = << "PHP";
         AddHandler php-cgi .php
         AddType application/x-httpd-php .php
-        Action application/x-httpd-php "/php/php-cgi-5.2.17"
+        Action application/x-httpd-php "/php/php-cgi-5.2"
 PHP
     }
     
@@ -168,7 +168,7 @@ PHP
         $phpVersion = << "PHP";
 AddHandler php-cgi .php
         AddType application/x-httpd-php .php
-        Action application/x-httpd-php "/php/php-cgi-5.3.16"
+        Action application/x-httpd-php "/php/php-cgi-5.3"
 PHP
     }
     
